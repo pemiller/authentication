@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 
-	"pemiller/authentication/datastore"
-	"pemiller/authentication/models"
+	"github.com/pemiller/authentication/datastore"
+	"github.com/pemiller/authentication/models"
 )
 
 // TestPassword compares provided password to password in the User document

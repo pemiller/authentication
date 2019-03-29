@@ -6,9 +6,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"pemiller/authentication/datastore"
-	"pemiller/authentication/helpers"
-	"pemiller/authentication/models"
+	"github.com/pemiller/authentication/datastore"
+	"github.com/pemiller/authentication/helpers"
+	"github.com/pemiller/authentication/models"
 )
 
 const SiteHeaderKey = "X-Site"

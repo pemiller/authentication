@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"pemiller/authentication/config"
-	"pemiller/authentication/models"
+	"github.com/pemiller/authentication/config"
+	"github.com/pemiller/authentication/models"
 
 	"github.com/couchbase/gocb"
 	gocbcore "gopkg.in/couchbase/gocbcore.v7"

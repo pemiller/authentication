@@ -2,9 +2,10 @@ package main
 
 import (
 	"log"
-	"pemiller/authentication/config"
-	"pemiller/authentication/handlers/routes"
-	"pemiller/authentication/middleware"
+
+	"github.com/pemiller/authentication/config"
+	"github.com/pemiller/authentication/handlers/routes"
+	"github.com/pemiller/authentication/middleware"
 
 	"github.com/gin-gonic/gin"
 )

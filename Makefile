@@ -7,21 +7,11 @@ bc=\x1b[34;01m
 BUILD=$(yc)[BUILD]$(nc)
 RUN=$(bc)[RUN]$(nc)
 
-deps:
-	@go get github.com/gin-gonic/gin
-	@go get github.com/ianschenck/envflag
-	@go get github.com/couchbase/gocb
-	@go get github.com/patrickmn/go-cache
-	@go get golang.org/x/crypto/bcrypt
-	@go get github.com/google/uuid
-	@go get gopkg.in/couchbase/gocbcore.v7
-	@go get github.com/joho/godotenv/autoload
-
-build: deps
+build: 
 	@echo ">>>> $(BUILD) building binary"
 	@go build -o build/$(BIN)
 
-run: deps
+run: 
 	@echo ">>>> $(RUN) running"
 	@build/$(BIN)
 

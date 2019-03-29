@@ -5,8 +5,8 @@ import (
 
 	"github.com/couchbase/gocb"
 
-	"pemiller/authentication/config"
-	"pemiller/authentication/models"
+	"github.com/pemiller/authentication/config"
+	"github.com/pemiller/authentication/models"
 )
 
 // GetAuthCode returns the AuthCode defined by the code
