@@ -49,11 +49,11 @@ func CreateAuthCode(c *gin.Context) {
 		Code:          helpers.GenerateAuthCode(),
 		UserID:        user.ID,
 		Email:         user.Email,
-		AuthType:      models.AuthTypeUser,
 		ApplicationID: app.ID,
+		AuthType:      models.AuthTypeUser,
+		Sites:         user.SiteRefs,
 		IP:            form.IP,
 		DateCreated:   time.Now().UTC(),
-		Sites:         user.SiteRefs,
 	}
 
 	// save AuthCode to data store
