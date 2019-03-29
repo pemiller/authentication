@@ -9,11 +9,11 @@ RUN=$(bc)[RUN]$(nc)
 
 build: 
 	@echo ">>>> $(BUILD) building binary"
-	@go build -o build/$(BIN)
+	@go build -o .bin/$(BIN)
 
 run: 
 	@echo ">>>> $(RUN) running"
-	@build/$(BIN)
+	@.bin/$(BIN)
 
 cb-docker:
 	docker run -i --name authentication -d \

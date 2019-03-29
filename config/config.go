@@ -2,11 +2,7 @@ package config
 
 import (
 	"fmt"
-
-	"github.com/ianschenck/envflag"
-
-	// automatically parses a .env file if it exists
-	_ "github.com/joho/godotenv/autoload"
+	"os"
 )
 
 // global configs
@@ -19,16 +15,17 @@ var (
 // ServiceName ...
 const ServiceName = "authentication"
 
-func init() {
-	envflag.StringVar(&Port, "PORT", "9199", "")
-	envflag.StringVar(&CouchbaseConnection, "CB_CONNECTION", "", "")
-}
-
 // Parse loads and validates the config
 func Parse() {
-	envflag.Parse()
+	Port = os.Getenv("AUTHENTICATION_PORT")
+	CouchbaseConnection = os.Getenv("AUTHENTICATION_CB_CONNECTION")
+
+	if Port == "" {
+		panic("Port missing")
+	}
+
 	if CouchbaseConnection == "" {
-		panic("CB_CONNECTION missing")
+		panic("Couchbase connection string missing")
 	}
 
 	Address = fmt.Sprintf(":%s", Port)

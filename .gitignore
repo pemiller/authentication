@@ -12,5 +12,4 @@
 *.out
 
 # Project specific
-.env
-/build
+/.bin

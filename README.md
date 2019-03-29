@@ -4,8 +4,8 @@ Authentication service using golang and couchbase
 ## Environment Variables
 
 ```
-CB_CONNECTION=couchbase://username:password@localhost/bucket
-PORT=9199
+AUTHENTICATION_CB_CONNECTION=couchbase://username:password@localhost/bucket
+AUTHENTICATION_PORT=9199
 ```
 
 ## Couchbase Indexes 
