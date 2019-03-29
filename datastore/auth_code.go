@@ -38,7 +38,7 @@ func (s *Store) UpsertAuthCode(authCode *models.AuthCode) error {
 func (s *Store) DeleteAuthCode(code string) error {
 	key := s.GetAuthCodeKey(code)
 
-	s.DeleteAuthCodeResponseFromCache(code)
+	s.DeleteAuthCodeDetailedFromCache(code)
 
 	_, err := s.bucket.Remove(key, 0)
 	if err == gocb.ErrKeyNotFound {
@@ -48,31 +48,31 @@ func (s *Store) DeleteAuthCode(code string) error {
 	return err
 }
 
-// GetAuthCodeResponseFromCache returns the AuthCodeReponse defined by the code
-func (s *Store) GetAuthCodeResponseFromCache(code string) (*models.AuthCodeResponse, error) {
-	key := s.GetAuthCodeResponseKey(code)
+// GetAuthCodeDetailedFromCache returns the AuthCodeReponse defined by the code
+func (s *Store) GetAuthCodeDetailedFromCache(code string) (*models.AuthCodeDetailed, error) {
+	key := s.GetAuthCodeDetailedKey(code)
 
 	if cacheAuthCode, found := s.cache.Get(key); found {
-		return cacheAuthCode.(*models.AuthCodeResponse), nil
+		return cacheAuthCode.(*models.AuthCodeDetailed), nil
 	}
 
 	return nil, nil
 }
 
-// UpsertAuthCodeResponseToCache adds the AuthCodeResponse if it does not exist, else it updates it.
+// UpsertAuthCodeDetailedToCache adds the AuthCodeDetailed if it does not exist, else it updates it.
 // Useful to not have to build the application and site models when returning the response
 // shortly after building it.
-func (s *Store) UpsertAuthCodeResponseToCache(authCodeResponse *models.AuthCodeResponse) error {
-	key := s.GetAuthCodeResponseKey(authCodeResponse.Code)
+func (s *Store) UpsertAuthCodeDetailedToCache(AuthCodeDetailed *models.AuthCodeDetailed) error {
+	key := s.GetAuthCodeDetailedKey(AuthCodeDetailed.Code)
 
-	s.cache.Set(key, authCodeResponse, cacheExpiration)
+	s.cache.Set(key, AuthCodeDetailed, cacheExpiration)
 
 	return nil
 }
 
-// DeleteAuthCodeResponseFromCache deletes the AuthCode represented by the token from Cache
-func (s *Store) DeleteAuthCodeResponseFromCache(code string) error {
-	key := s.GetAuthCodeResponseKey(code)
+// DeleteAuthCodeDetailedFromCache deletes the AuthCode represented by the code from Cache
+func (s *Store) DeleteAuthCodeDetailedFromCache(code string) error {
+	key := s.GetAuthCodeDetailedKey(code)
 
 	s.cache.Delete(key)
 
@@ -84,8 +84,8 @@ func (s *Store) GetAuthCodeKey(id string) string {
 	return fmt.Sprintf("%s:auth_code:%s", config.ServiceName, id)
 }
 
-// GetAuthCodeResponseKey created a document key for an AuthCodeResponse document
-func (s *Store) GetAuthCodeResponseKey(id string) string {
+// GetAuthCodeDetailedKey created a document key for an AuthCodeDetailed document
+func (s *Store) GetAuthCodeDetailedKey(id string) string {
 	return fmt.Sprintf("%s:auth_code_response:%s", config.ServiceName, id)
 }
 

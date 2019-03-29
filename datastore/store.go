@@ -18,6 +18,7 @@ const ContextKey = "datastore"
 var (
 	authCodeExpiration         = uint32((time.Hour * 336).Seconds()) // 2 weeks
 	applicationTokenExpiration = uint32((time.Hour * 24).Seconds())  // 1 day
+	accessTokenExpiration      = uint32((time.Hour * 24).Seconds())  // 1 day
 	failCountExpiration        = uint32((time.Minute * 5).Seconds()) // 5 minutes
 	cacheExpiration            = time.Duration(20 * time.Second)     // 20 seconds
 )

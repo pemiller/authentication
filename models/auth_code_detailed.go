@@ -1,7 +1,7 @@
 package models
 
-// AuthCodeResponse ...
-type AuthCodeResponse struct {
+// AuthCodeDetailed ...
+type AuthCodeDetailed struct {
 	Code        string        `json:"code"`
 	AuthType    AuthTypeValue `json:"auth_type"`
 	Status      LoginStatus   `json:"status"`

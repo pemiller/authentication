@@ -26,7 +26,11 @@ func registerRoutes(e *gin.Engine) {
 	api := e.Group("/api")
 
 	app := api.Group("/", middleware.ProcessApplicationHeader)
-	app.POST("/", routes.CreateAuthCode)
-	app.GET("/", middleware.ProcessAuthCodeHeader, routes.GetAuthCode)
-	app.DELETE("/", middleware.ProcessAuthCodeHeader, routes.DeleteAuthCode)
+	app.POST("/code", routes.CreateAuthCode)
+	app.GET("/code", middleware.ProcessAuthCodeHeader, routes.GetAuthCode)
+	app.DELETE("/code", middleware.ProcessAuthCodeHeader, routes.DeleteAuthCode)
+
+	app.POST("/token", middleware.ProcessAuthCodeHeader, routes.CreateAccessToken)
+	app.GET("/token", middleware.ProcessAccessTokenHeader, routes.GetAccessToken)
+	app.DELETE("/token", middleware.ProcessAccessTokenHeader, routes.DeleteAccessToken)
 }
