@@ -97,9 +97,9 @@ func (s *Store) ExecuteQuery(query string, params interface{}, options ...func(*
 	}
 
 	bucket := fmt.Sprintf("`%s`", s.bucketName)
-	strings.Replace(query, "$bucket", bucket, -1)
+	preparedQuery := strings.Replace(query, "$bucket", bucket, -1)
 
-	n1ql := gocb.NewN1qlQuery(query)
+	n1ql := gocb.NewN1qlQuery(preparedQuery)
 	for _, opt := range options {
 		opt(n1ql)
 	}

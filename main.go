@@ -33,4 +33,6 @@ func registerRoutes(e *gin.Engine) {
 	app.POST("/token", middleware.ProcessAuthCodeHeader, routes.CreateAccessToken)
 	app.GET("/token", middleware.ProcessAccessTokenHeader, routes.GetAccessToken)
 	app.DELETE("/token", middleware.ProcessAccessTokenHeader, routes.DeleteAccessToken)
+	//TODO: restrict this to internal ips only
+	app.POST("/token/application", routes.CreateApplicationAccessToken)
 }
