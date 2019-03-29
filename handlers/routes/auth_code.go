@@ -1,0 +1,220 @@
+package routes
+
+import (
+	"context"
+	"net/http"
+	"pemiller/authentication/datastore"
+	"pemiller/authentication/helpers"
+	"pemiller/authentication/middleware"
+	"pemiller/authentication/models"
+	"time"
+
+	"github.com/gin-gonic/gin"
+)
+
+// CreateAuthCode creates a new AuthCode for the authorization header in the request
+func CreateAuthCode(c *gin.Context) {
+	// get the authorization header value if it is basic auth
+	headerValue, err := helpers.ParseAuthorizationHeader(c.Request, helpers.AuthTypeBasic)
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	// parse the authorization header into a username and password
+	username, password, err := helpers.DecodeBasicCredentials(headerValue)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	// get the ip address from the body if it was provided
+	form := &models.CreateAuthCodeRequest{}
+	if c.Request.Body != http.NoBody {
+		err = c.BindJSON(form)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+	}
+
+	// check the credentials provided in the header and get the user object from the data store
+	ok, user := checkAuth(c, username, password, form.IP)
+	if !ok {
+		return
+	}
+
+	app := middleware.GetApplication(c)
+	authCode := &models.AuthCode{
+		Code:          helpers.GenerateAuthCode(),
+		UserID:        user.ID,
+		Email:         user.Email,
+		AuthType:      models.AuthTypeUser,
+		ApplicationID: app.ID,
+		IP:            form.IP,
+		DateCreated:   time.Now().UTC(),
+		Sites:         user.SiteRefs,
+	}
+
+	// save AuthCode to data store
+	err = datastore.GetFromContext(c).UpsertAuthCode(authCode)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	model := &models.AuthCodeResponse{
+		Code:        authCode.Code,
+		AuthType:    models.AuthTypeUser,
+		Status:      getLoginStatus(user.IsValidated, user.DateExpires),
+		Application: app,
+	}
+	model.Sites, err = getSites(c, authCode.Sites)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	datastore.GetFromContext(c).UpsertAuthCodeResponseToCache(model)
+	c.Header(middleware.AuthCodeHeaderKey, authCode.Code)
+	c.JSON(http.StatusCreated, model)
+}
+
+func checkAuth(c *gin.Context, email, pass, ip string) (bool, *models.User) {
+	// check if there is a locking document for the email, preventing access
+	if locked, err := datastore.GetFromContext(c).UserIsLocked(email); err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return false, nil
+	} else if locked {
+		c.String(http.StatusUnauthorized, "Locked")
+		return false, nil
+	}
+
+	// get user document from couchbase datastore
+	user, err := datastore.GetFromContext(c).GetUserByEmail(email)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return false, nil
+	}
+	if user == nil {
+		c.Status(http.StatusNotFound)
+		return false, nil
+	}
+
+	// check if the provided password matches the stored one
+	match := helpers.TestPassword(c, user, pass)
+	if !match {
+		return false, nil
+	}
+
+	// clear any login failures if they exist
+	err = datastore.GetFromContext(c).ClearLoginFailCount(email)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return false, nil
+	}
+
+	// append a login record to the list of logins
+	err = datastore.GetFromContext(c).UpdateLoginDateForAll(user.ID, models.AuthTypeUser, ip)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return false, nil
+	}
+
+	return true, user
+}
+
+// GetAuthCode returns an AuthCodeResponse based on the context
+func GetAuthCode(c *gin.Context) {
+	authCode := middleware.GetAuthCode(c)
+
+	// check to see if the response model is still in the cache
+	response, err := datastore.GetFromContext(c).GetAuthCodeResponseFromCache(authCode.Code)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	// if the response was not in the cache then build it from the AuthCode
+	if response == nil {
+		// build list of site models
+		sites, err := getSites(c, authCode.Sites)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		// get user model
+		user, err := datastore.GetFromContext(c).GetUser(authCode.UserID)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+		if user == nil {
+			c.Status(http.StatusNotFound)
+			return
+		}
+
+		app := middleware.GetApplication(c)
+		response = &models.AuthCodeResponse{
+			Code:        authCode.Code,
+			AuthType:    authCode.AuthType,
+			Status:      getLoginStatus(user.IsValidated, user.DateExpires),
+			Application: app,
+			Sites:       sites,
+		}
+		datastore.GetFromContext(c).UpsertAuthCodeResponseToCache(response)
+	}
+	c.Header(middleware.AuthCodeHeaderKey, authCode.Code)
+	c.JSON(http.StatusOK, response)
+}
+
+// DeleteAuthCode deletes the AuthCode from datastore and cache
+func DeleteAuthCode(c *gin.Context) {
+	authCode := middleware.GetAuthCode(c)
+	datastore.GetFromContext(c).DeleteAuthCode(authCode.Code)
+	c.Status(http.StatusNoContent)
+}
+
+// getSites returns a list of site models from a list of site ids
+func getSites(c context.Context, sites []string) ([]*models.Site, error) {
+	siteChan := make(chan *models.Site)
+	errChan := make(chan error)
+	result := []*models.Site{}
+
+	for _, siteID := range sites {
+		go func(s string) {
+			site, err := datastore.GetFromContext(c).GetSite(s)
+			if err != nil {
+				errChan <- err
+			}
+			if site != nil {
+				siteChan <- site
+			}
+		}(siteID)
+	}
+
+	for range sites {
+		select {
+		case s := <-siteChan:
+			if s != nil {
+				result = append(result, s)
+			}
+		case e := <-errChan:
+			return nil, e
+		}
+	}
+
+	return result, nil
+}
+
+// getLoginStatus returns LoginStatus based on the parameters
+func getLoginStatus(isValidated bool, dateExpires *time.Time) models.LoginStatus {
+	if !isValidated {
+		return models.LoginStatusNotValidated
+	}
+	if dateExpires != nil && dateExpires.Sub(time.Now().UTC()) <= 0 {
+		return models.LoginStatusExpired
+	}
+	return models.LoginStatusOK
+}
