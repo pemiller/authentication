@@ -135,7 +135,13 @@ func (s *Store) ClearLoginFailCount(email string) error {
 
 // UpdateLoginDateForAll sets the Last Login fields for the ALL record
 func (s *Store) UpdateLoginDateForAll(id string, authType models.AuthTypeValue, ip string) error {
-	return s.updateLoginDate(id, "logins", authType, ip)
+	return s.updateLoginDate(strings.ToLower(id), "logins", authType, ip)
+}
+
+// UpdateLoginDateForSite sets the Last Login fields for a site
+func (s *Store) UpdateLoginDateForSite(id, siteID string, authType models.AuthTypeValue, ip string) error {
+	path := fmt.Sprintf("sites.`%s`.logins", strings.ToLower(siteID))
+	return s.updateLoginDate(strings.ToLower(id), path, authType, ip)
 }
 
 // GetUserKey created a document key for a User document
@@ -183,8 +189,8 @@ func (s *Store) updateLoginDate(id, path string, authType models.AuthTypeValue, 
 		IP:       ip,
 	}
 	logins = append([]*models.LoginTime{newLogin}, logins...)
-	if len(logins) > 40 {
-		logins = logins[0:40]
+	if len(logins) > 50 {
+		logins = logins[0:50]
 	}
 
 	_, err = s.bucket.MutateIn(key, 0, 0).Upsert(path, logins, true).Execute()

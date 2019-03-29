@@ -63,10 +63,10 @@ func CreateAuthCode(c *gin.Context) {
 		return
 	}
 
-	model := &models.AuthCodeResponse{
+	model := &models.AuthCodeDetailed{
 		Code:        authCode.Code,
 		AuthType:    models.AuthTypeUser,
-		Status:      getLoginStatus(user.IsValidated, user.DateExpires),
+		Status:      helpers.GetLoginStatus(user.IsValidated, user.DateExpires),
 		Application: app,
 	}
 	model.Sites, err = getSites(c, authCode.Sites)
@@ -75,7 +75,7 @@ func CreateAuthCode(c *gin.Context) {
 		return
 	}
 
-	datastore.GetFromContext(c).UpsertAuthCodeResponseToCache(model)
+	datastore.GetFromContext(c).UpsertAuthCodeDetailedToCache(model)
 	c.Header(middleware.AuthCodeHeaderKey, authCode.Code)
 	c.JSON(http.StatusCreated, model)
 }
@@ -124,12 +124,12 @@ func checkAuth(c *gin.Context, email, pass, ip string) (bool, *models.User) {
 	return true, user
 }
 
-// GetAuthCode returns an AuthCodeResponse based on the context
+// GetAuthCode returns an AuthCodeDetailed based on the context
 func GetAuthCode(c *gin.Context) {
 	authCode := middleware.GetAuthCode(c)
 
 	// check to see if the response model is still in the cache
-	response, err := datastore.GetFromContext(c).GetAuthCodeResponseFromCache(authCode.Code)
+	response, err := datastore.GetFromContext(c).GetAuthCodeDetailedFromCache(authCode.Code)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, helpers.PrepareErrorResponse("Unable to get AuthCode from cache", err))
 		return
@@ -156,14 +156,14 @@ func GetAuthCode(c *gin.Context) {
 		}
 
 		app := middleware.GetApplication(c)
-		response = &models.AuthCodeResponse{
+		response = &models.AuthCodeDetailed{
 			Code:        authCode.Code,
 			AuthType:    authCode.AuthType,
-			Status:      getLoginStatus(user.IsValidated, user.DateExpires),
+			Status:      helpers.GetLoginStatus(user.IsValidated, user.DateExpires),
 			Application: app,
 			Sites:       sites,
 		}
-		datastore.GetFromContext(c).UpsertAuthCodeResponseToCache(response)
+		datastore.GetFromContext(c).UpsertAuthCodeDetailedToCache(response)
 	}
 	c.Header(middleware.AuthCodeHeaderKey, authCode.Code)
 	c.JSON(http.StatusOK, response)
@@ -206,15 +206,4 @@ func getSites(c context.Context, sites []string) ([]*models.Site, error) {
 	}
 
 	return result, nil
-}
-
-// getLoginStatus returns LoginStatus based on the parameters
-func getLoginStatus(isValidated bool, dateExpires *time.Time) models.LoginStatus {
-	if !isValidated {
-		return models.LoginStatusNotValidated
-	}
-	if dateExpires != nil && dateExpires.Sub(time.Now().UTC()) <= 0 {
-		return models.LoginStatusExpired
-	}
-	return models.LoginStatusOK
 }
