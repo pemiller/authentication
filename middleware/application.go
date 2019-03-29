@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"pemiller/authentication/datastore"
+	"pemiller/authentication/helpers"
 	"pemiller/authentication/models"
 
 	"github.com/gin-gonic/gin"
@@ -18,19 +18,16 @@ const applicationContextKey = "application"
 func ProcessApplicationHeader(c *gin.Context) {
 	headerValue := c.Request.Header.Get(applicationHeaderKey)
 	if len(headerValue) == 0 {
-		log.Printf("Request header is missing %s\n", applicationHeaderKey)
-		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("Missing application request header"))
+		c.AbortWithStatusJSON(http.StatusBadRequest, helpers.PrepareErrorResponse(fmt.Sprintf("Request header is missing %s", applicationHeaderKey), nil))
 		return
 	}
 
 	app, err := datastore.GetFromContext(c).GetApplication(headerValue)
 	if err != nil {
-		log.Println("Error getting application from datastore")
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, helpers.PrepareErrorResponse("Error getting application from datastore", err))
 	}
 	if app == nil {
-		log.Println("Cannot find application")
-		c.AbortWithStatus(http.StatusForbidden)
+		c.AbortWithStatusJSON(http.StatusForbidden, helpers.PrepareErrorResponse("Cannot find application", nil))
 		return
 	}
 

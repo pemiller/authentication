@@ -4,6 +4,9 @@ import (
 	"fmt"
 
 	"github.com/ianschenck/envflag"
+
+	// automatically parses a .env file if it exists
+	_ "github.com/joho/godotenv/autoload"
 )
 
 // global configs

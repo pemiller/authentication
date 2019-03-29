@@ -15,6 +15,7 @@ deps:
 	@go get golang.org/x/crypto/bcrypt
 	@go get github.com/google/uuid
 	@go get gopkg.in/couchbase/gocbcore.v7
+	@go get github.com/joho/godotenv/autoload
 
 build: deps
 	@echo ">>>> $(BUILD) building binary"

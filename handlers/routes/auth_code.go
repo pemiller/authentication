@@ -17,14 +17,14 @@ func CreateAuthCode(c *gin.Context) {
 	// get the authorization header value if it is basic auth
 	headerValue, err := helpers.ParseAuthorizationHeader(c.Request, helpers.AuthTypeBasic)
 	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, helpers.PrepareErrorResponse("Unable to parse header", err))
 		return
 	}
 
 	// parse the authorization header into a username and password
 	username, password, err := helpers.DecodeBasicCredentials(headerValue)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, helpers.PrepareErrorResponse("Unable to decode credentials", err))
 		return
 	}
 
@@ -33,7 +33,7 @@ func CreateAuthCode(c *gin.Context) {
 	if c.Request.Body != http.NoBody {
 		err = c.BindJSON(form)
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, helpers.PrepareErrorResponse("Unable to read body", err))
 			return
 		}
 	}
@@ -59,7 +59,7 @@ func CreateAuthCode(c *gin.Context) {
 	// save AuthCode to data store
 	err = datastore.GetFromContext(c).UpsertAuthCode(authCode)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, helpers.PrepareErrorResponse("Unable to create AuthCode", err))
 		return
 	}
 
@@ -71,7 +71,7 @@ func CreateAuthCode(c *gin.Context) {
 	}
 	model.Sites, err = getSites(c, authCode.Sites)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, helpers.PrepareErrorResponse("Unable to get list of sites", err))
 		return
 	}
 
@@ -83,17 +83,17 @@ func CreateAuthCode(c *gin.Context) {
 func checkAuth(c *gin.Context, email, pass, ip string) (bool, *models.User) {
 	// check if there is a locking document for the email, preventing access
 	if locked, err := datastore.GetFromContext(c).UserIsLocked(email); err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, helpers.PrepareErrorResponse("Unable to check if user is locked", err))
 		return false, nil
 	} else if locked {
-		c.String(http.StatusUnauthorized, "Locked")
+		c.AbortWithStatusJSON(http.StatusUnauthorized, helpers.PrepareErrorResponse("Locked", nil))
 		return false, nil
 	}
 
 	// get user document from couchbase datastore
 	user, err := datastore.GetFromContext(c).GetUserByEmail(email)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, helpers.PrepareErrorResponse("Unable to get user", err))
 		return false, nil
 	}
 	if user == nil {
@@ -110,14 +110,14 @@ func checkAuth(c *gin.Context, email, pass, ip string) (bool, *models.User) {
 	// clear any login failures if they exist
 	err = datastore.GetFromContext(c).ClearLoginFailCount(email)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, helpers.PrepareErrorResponse("Unable to clear failed logins", err))
 		return false, nil
 	}
 
 	// append a login record to the list of logins
 	err = datastore.GetFromContext(c).UpdateLoginDateForAll(user.ID, models.AuthTypeUser, ip)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, helpers.PrepareErrorResponse("Unable to update login date", err))
 		return false, nil
 	}
 
@@ -131,7 +131,7 @@ func GetAuthCode(c *gin.Context) {
 	// check to see if the response model is still in the cache
 	response, err := datastore.GetFromContext(c).GetAuthCodeResponseFromCache(authCode.Code)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, helpers.PrepareErrorResponse("Unable to get AuthCode from cache", err))
 		return
 	}
 
@@ -140,18 +140,18 @@ func GetAuthCode(c *gin.Context) {
 		// build list of site models
 		sites, err := getSites(c, authCode.Sites)
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, helpers.PrepareErrorResponse("Unable to get list of sites", err))
 			return
 		}
 
 		// get user model
 		user, err := datastore.GetFromContext(c).GetUser(authCode.UserID)
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, helpers.PrepareErrorResponse("Unable to get user", err))
 			return
 		}
 		if user == nil {
-			c.Status(http.StatusNotFound)
+			c.AbortWithStatusJSON(http.StatusNotFound, helpers.PrepareErrorResponse("Cannot find AuthCode", nil))
 			return
 		}
 

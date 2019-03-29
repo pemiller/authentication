@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -21,27 +20,23 @@ const authCodeContextKey = "auth_code"
 func ProcessAuthCodeHeader(c *gin.Context) {
 	code, err := helpers.ParseAuthorizationHeader(c.Request, helpers.AuthTypeCode)
 	if len(code) == 0 {
-		log.Printf("Request header is missing authorization with type %s\n", helpers.AuthTypeCode)
-		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("Missing authorization request header"))
+		c.AbortWithStatusJSON(http.StatusBadRequest, helpers.PrepareErrorResponse(fmt.Sprintf("Request header is missing authorization with type %s", helpers.AuthTypeCode), nil))
 		return
 	}
 
 	authCode, err := datastore.GetFromContext(c).GetAuthCode(code)
 	if err != nil {
-		log.Println("Error getting auth code from datastore")
-		c.AbortWithError(http.StatusInternalServerError, err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, helpers.PrepareErrorResponse("Unable to get AuthCode", err))
 		return
 	}
 	if authCode == nil {
-		log.Println("Cannot find auth code")
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.AbortWithStatusJSON(http.StatusUnauthorized, helpers.PrepareErrorResponse("Cannot find AuthCode", nil))
 		return
 	}
 
 	app := GetApplication(c)
 	if app.ID != authCode.ApplicationID {
-		log.Println("Auth code did not match application in the context")
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.AbortWithStatusJSON(http.StatusUnauthorized, helpers.PrepareErrorResponse("AuthCode did not match application", nil))
 		return
 	}
 

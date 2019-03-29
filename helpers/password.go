@@ -20,7 +20,7 @@ func TestPassword(c *gin.Context, user *models.User, providedPassword string) bo
 	if !match {
 		locked, err := datastore.GetFromContext(c).IncrLoginFailCount(user.Email)
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, PrepareErrorResponse("Unable to update failed login", err))
 			return false
 		}
 		if locked {

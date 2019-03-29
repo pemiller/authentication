@@ -16,8 +16,6 @@ func main() {
 	r.Use(middleware.SetupDataStore())
 	registerRoutes(r)
 
-	log.Printf("listening on '%s'\n", config.Address)
-
 	err := r.Run(config.Address)
 	if err != nil {
 		log.Fatal(err)
