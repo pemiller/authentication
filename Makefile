@@ -15,11 +15,10 @@ run:
 	@echo ">>>> $(RUN) running"
 	@.bin/$(BIN)
 
-cb-docker:
-	docker run -i --name authentication -d \
-		-p 8091-8094:8091-8094 \
-		-p 11210:11210 \
-		-v $(CURDIR)/tmp/couchbase/var:/opt/couchbase/var \
-		couchbase:5.5.1
+run-docker:
+	@echo ">>>> $(BUILD) building docker image"
+	@docker build -t authentication:latest .
+	@echo ">>>> $(RUN) running docker container"
+	@docker run -it --rm --name authentication -p 9151:9151 authentication bash
 
-.PHONY: build run cb-docker
+.PHONY: build run run-docker

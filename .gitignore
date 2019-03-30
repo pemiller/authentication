@@ -13,3 +13,4 @@
 
 # Project specific
 /.bin
+Dockerfile
