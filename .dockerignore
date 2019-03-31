@@ -1,0 +1,3 @@
+# files for docker to ignore
+.git
+.bin

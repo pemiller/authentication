@@ -2,9 +2,10 @@ package middleware
 
 import (
 	"log"
-	"pemiller/authentication/config"
-	"pemiller/authentication/datastore"
 	"time"
+
+	"github.com/pemiller/authentication/config"
+	"github.com/pemiller/authentication/datastore"
 
 	"github.com/gin-gonic/gin"
 	cache "github.com/patrickmn/go-cache"

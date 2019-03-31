@@ -6,8 +6,8 @@ import (
 	"github.com/couchbase/gocb"
 	cache "github.com/patrickmn/go-cache"
 
-	"pemiller/authentication/config"
-	"pemiller/authentication/models"
+	"github.com/pemiller/authentication/config"
+	"github.com/pemiller/authentication/models"
 )
 
 const (

@@ -3,11 +3,12 @@ package routes
 import (
 	"context"
 	"net/http"
-	"pemiller/authentication/datastore"
-	"pemiller/authentication/helpers"
-	"pemiller/authentication/middleware"
-	"pemiller/authentication/models"
 	"time"
+
+	"github.com/pemiller/authentication/datastore"
+	"github.com/pemiller/authentication/helpers"
+	"github.com/pemiller/authentication/middleware"
+	"github.com/pemiller/authentication/models"
 
 	"github.com/gin-gonic/gin"
 )

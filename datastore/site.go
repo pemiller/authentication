@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"pemiller/authentication/models"
+	"github.com/pemiller/authentication/models"
 
 	"github.com/couchbase/gocb"
 )

@@ -9,10 +9,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"pemiller/authentication/datastore"
-	"pemiller/authentication/helpers"
-	"pemiller/authentication/middleware"
-	"pemiller/authentication/models"
+	"github.com/pemiller/authentication/helpers"
+	"github.com/pemiller/authentication/middleware"
+	"github.com/pemiller/authentication/models"
+
+	"github.com/pemiller/authentication/datastore"
 )
 
 // CreateAccessToken creates a new AccessToken for the authorization header in the request

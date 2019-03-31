@@ -1,0 +1,26 @@
+# Start from a Debian image with the latest version of Go installed
+# and a workspace (GOPATH) configured at /go.
+FROM golang:latest as builder
+WORKDIR /go/src/authentication
+
+# Copy the local package files to the container's workspace.
+COPY . .
+
+# Build the service
+RUN make build
+
+# Use alpine as base for image
+FROM alpine:latest
+RUN apk add --no-cache ca-certificates
+
+# Set environment variables
+ENV AUTHENTICATION_PORT=9199
+ENV AUTHENTICATION_CB_CONNECTION=couchbase://username:password@host/bucket
+ENV GIN_MODE=release
+
+# Document that the service listens on port 9199.
+EXPOSE 9199
+
+# Move binary to alpine docker image
+COPY --from=builder /go/src/authentication/.bin/authentication /opt/authentication/
+ENTRYPOINT ["/opt/authentication/authentication"]

@@ -5,8 +5,8 @@ import (
 
 	"github.com/couchbase/gocb"
 
-	"pemiller/authentication/config"
-	"pemiller/authentication/models"
+	"github.com/pemiller/authentication/config"
+	"github.com/pemiller/authentication/models"
 )
 
 // GetAccessToken returns the AccessToken defined by the token

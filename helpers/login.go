@@ -1,8 +1,9 @@
 package helpers
 
 import (
-	"pemiller/authentication/models"
 	"time"
+
+	"github.com/pemiller/authentication/models"
 )
 
 // GetLoginStatus returns LoginStatus based on the parameters
